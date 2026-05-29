@@ -1,0 +1,794 @@
+
+<h2 class="sr-only">CPAC Metro Air Quality Platform v7</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans Thai',sans-serif;background:#0f172a;color:#f1f5f9;min-height:100vh}
+:root{--card:#1e293b;--border:#334155;--muted:#94a3b8;--bg:#0f172a}
+
+.topbar{background:#0c1f3f;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 1rem;position:sticky;top:0;z-index:200;gap:6px}
+.logo{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.logo-box{width:26px;height:26px;background:#1d4ed8;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#fff}
+.logo-main{color:#fff;font-size:.88rem;font-weight:800}
+.logo-sub{color:#60a5fa;font-size:.62rem;display:block;line-height:1}
+.topbar-mid{display:flex;align-items:center;gap:5px;flex:1;justify-content:center}
+.mpill{padding:4px 12px;border-radius:18px;border:1.5px solid #334155;background:#1e293b;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
+.mpill.pm10.active{background:#ea580c;border-color:#f97316;color:#fff}
+.mpill.pm25.active{background:#0369a1;border-color:#0ea5e9;color:#fff}
+.mpill.aqi.active{background:#6d28d9;border-color:#a855f7;color:#fff}
+.topbar-right{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.tb-btn{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);color:#fff;padding:5px 10px;border-radius:7px;font-size:11.5px;cursor:pointer;display:flex;align-items:center;gap:4px;white-space:nowrap;font-weight:600;transition:all .2s}
+.tb-btn:hover{background:rgba(255,255,255,.18)}
+.tb-btn:disabled{opacity:.45;pointer-events:none}
+.tb-btn.active-nav{background:#1d4ed8;border-color:#3b82f6}
+.tb-btn.green{background:rgba(16,185,129,.13);border-color:rgba(16,185,129,.3);color:#6ee7b7}
+.tb-btn.green:hover{background:rgba(16,185,129,.25)}
+.tb-btn.cyan{background:rgba(6,182,212,.13);border-color:rgba(6,182,212,.3);color:#67e8f9}
+.tb-btn.cyan:hover{background:rgba(6,182,212,.25)}
+
+.date-bar{background:#132035;border-bottom:1px solid #1e3a5f;padding:.45rem 1rem;display:flex;align-items:center;gap:7px;flex-wrap:wrap;position:sticky;top:54px;z-index:150}
+.dbar-label{font-size:12px;color:#64748b;white-space:nowrap}
+.dbar-range{font-size:12px;font-weight:600;color:#60a5fa;background:#1e3a5f;padding:3px 10px;border-radius:6px;white-space:nowrap}
+.dbar-btn{padding:4px 11px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#94a3b8;font-size:12px;cursor:pointer;transition:all .15s}
+.dbar-btn:hover,.dbar-btn.active{background:#1d4ed8;border-color:#3b82f6;color:#fff}
+.date-inp{background:#1e293b;border:1px solid #334155;color:#f1f5f9;padding:3px 7px;border-radius:6px;font-size:12px;cursor:pointer;width:108px}
+.date-inp::-webkit-calendar-picker-indicator{filter:invert(1);opacity:.5;cursor:pointer}
+.dbar-sep{color:#334155}
+
+.page{display:none}.page.active{display:block}
+.inner{padding:1rem;max-width:1380px;margin:0 auto}
+.hero{background:linear-gradient(135deg,#1d4ed8,#0c1f3f);border-radius:12px;padding:.9rem 1.2rem;margin-bottom:.9rem}
+.hero-title{font-size:1.2rem;font-weight:800;color:#fff;margin-bottom:2px}
+.hero-sub{font-size:12px;color:rgba(255,255,255,.65)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px}
+.info-card{background:var(--card);border-radius:10px;padding:.85rem .95rem;border:1px solid var(--border)}
+.ic-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem}
+.std-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:3px 0;border-bottom:1px solid #162032}
+.std-row:last-child{border:none}
+.offline-list{display:flex;flex-direction:column;gap:3px;max-height:140px;overflow-y:auto}
+.off-item{font-size:12px;color:#f59e0b;display:flex;flex-direction:column;padding:3px 0;border-bottom:1px solid #162032}
+.off-item:last-child{border:none}
+.off-name{display:flex;align-items:center;gap:5px;font-weight:600}
+.off-name::before{content:'●';font-size:7px}
+.off-reason{font-size:11px;color:#78716c;padding-left:12px}
+.bw-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:.9rem}
+.bw-card{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:.8rem .95rem;display:flex;align-items:center;gap:10px}
+.bw-icon{font-size:24px;flex-shrink:0}
+.bw-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.bw-name{font-size:.95rem;font-weight:700}
+.bw-val{font-size:11px;margin-top:2px}
+.bw-card.best .bw-name{color:#22c55e}
+.bw-card.worst .bw-name{color:#ef4444}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:.9rem}
+.s4c{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:.8rem .95rem;display:flex;align-items:center;justify-content:space-between}
+.s4label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.s4val{font-size:1.65rem;font-weight:800;line-height:1}
+.s4sub{font-size:11px;color:var(--muted);margin-top:2px}
+.s4val.green{color:#22c55e}.s4val.red{color:#ef4444}.s4val.blue{color:#0ea5e9}
+.bar-section{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:.9rem;margin-bottom:.9rem}
+.bar-sec-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.7rem;display:flex;align-items:center;justify-content:space-between}
+.bar-chart-wrap{position:relative;width:100%;height:310px}
+.table-card{background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:.9rem}
+.table-hdr{padding:.75rem .95rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.t-title{font-size:13px;font-weight:600}.t-sub{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#0d1e33;color:var(--muted);font-weight:500;text-align:left;padding:.5rem .6rem;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+td{padding:.48rem .6rem;border-top:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.02);cursor:pointer}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px}
+.badge-ok{background:#166534;color:#86efac}.badge-over{background:#7f1d1d;color:#fca5a5}
+.tsw{width:34px;height:18px;border-radius:9px;cursor:pointer;position:relative;border:none;flex-shrink:0;transition:background .2s;background:#ef4444}
+.tsw.on{background:#22c55e}
+.tsw::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:2px;left:2px;transition:left .2s}
+.tsw.on::after{left:18px}
+.reason-inp{background:#0f172a;border:1px solid #334155;color:#f1f5f9;padding:4px 6px;border-radius:6px;font-size:11px;width:115px;outline:none}
+.reason-inp:focus{border-color:#3b82f6}
+.reason-inp:disabled{opacity:.28;cursor:not-allowed}
+.dq-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;cursor:default;position:relative}
+.dq-ok{background:#166534;color:#86efac}.dq-warn{background:#78350f;color:#fde68a}
+.dq-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.dq-ok .dq-dot{background:#86efac}.dq-warn .dq-dot{background:#fde68a}
+.has-tip{position:relative}
+.has-tip .tip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1e293b;border:1px solid #334155;color:#f1f5f9;font-size:11px;padding:6px 10px;border-radius:7px;z-index:300;opacity:0;pointer-events:none;transition:opacity .15s;min-width:180px;max-width:260px;white-space:normal;text-align:left;line-height:1.45}
+.has-tip:hover .tip{opacity:1}
+.rank-num{width:20px;height:20px;border-radius:50%;background:#334155;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+
+/* DETAIL */
+.det-hero{background:linear-gradient(135deg,#1d4ed8,#0c1f3f);border-radius:12px;padding:.9rem 1.2rem;margin-bottom:.9rem;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.det-title{font-size:1.25rem;font-weight:800;color:#fff}
+.det-sub{font-size:12px;color:rgba(255,255,255,.65);margin-top:2px}
+.det-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.btn-back{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 11px;border-radius:7px;font-size:12px;cursor:pointer}
+.det4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:.9rem}
+.dsc{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:.8rem .95rem}
+.dsc-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.dsc-val{font-size:1.5rem;font-weight:800;line-height:1}
+.dsc-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.dsc-val.red{color:#ef4444}.dsc-val.yellow{color:#eab308}.dsc-val.green{color:#22c55e}
+.sec{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:.85rem .95rem;margin-bottom:.9rem}
+.sec-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem}
+.chart-wrap{position:relative;width:100%;height:205px}
+.hm-outer{overflow-x:auto}
+.hm-table{border-collapse:collapse;font-size:10px;min-width:680px;width:100%}
+.hm-table th{background:transparent;color:var(--muted);font-size:10px;text-align:center;padding:2px 1px;font-weight:500}
+.hm-table td{text-align:center;padding:1px}
+.hm-cell{height:25px;min-width:31px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
+.hm-cell.cn{background:#162032;color:#475569}.hm-cell.cg{background:#166534;color:#bbf7d0}
+.hm-cell.cw{background:#854d0e;color:#fef08a}.hm-cell.cb{background:#7f1d1d;color:#fca5a5}
+.hm-rl{font-size:10px;color:var(--muted);text-align:right;padding-right:4px;white-space:nowrap}
+.hm-legend{display:flex;gap:10px;margin-top:.4rem;flex-wrap:wrap}
+.hm-li{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)}
+.hm-ld{width:10px;height:10px;border-radius:2px}
+.spray-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:.6rem}
+.spray-slot{border:1.5px solid var(--border);border-radius:9px;padding:.7rem;text-align:center;transition:all .2s}
+.spray-slot.act{border-color:#22c55e;background:rgba(34,197,94,.07)}
+.ss-name{font-size:13px;font-weight:700;margin-bottom:2px}.ss-time{font-size:11px;color:var(--muted);margin-bottom:4px}
+.ss-chk{font-size:18px;opacity:.15}.spray-slot.act .ss-chk{opacity:1;color:#22c55e}
+.peak-card{background:rgba(234,179,8,.05);border:1px solid rgba(234,179,8,.25);border-radius:8px;padding:.65rem .85rem}
+.peak-lbl{font-size:11px;color:#a16207;margin-bottom:3px}.peak-hrs{font-size:1rem;font-weight:800;color:#f59e0b}
+.peak-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.tl{display:flex;flex-direction:column;max-height:260px;overflow-y:auto}
+.tl-row{display:flex;align-items:flex-start;gap:8px;padding:.45rem 0;border-bottom:1px solid var(--border)}
+.tl-row:last-child{border:none}
+.tl-date{font-size:12px;color:var(--muted);min-width:74px;padding-top:2px}
+.tl-badge{font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0}
+.tl-badge.l1{background:#854d0e;color:#fef08a}.tl-badge.l2{background:#7f1d1d;color:#fca5a5}
+.tl-val{font-size:13px;font-weight:600;flex:1}.tl-dur{font-size:11px;color:var(--muted)}
+
+/* ── UPLOAD PAGE (inline, not iframe) ── */
+#pageUpload{background:#0e1116;min-height:calc(100vh - 54px);font-family:'IBM Plex Sans Thai','Space Mono',sans-serif}
+.up-header{border-bottom:1px solid #2a323d;background:rgba(14,17,22,.9);backdrop-filter:blur(10px);padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.up-brand{display:flex;align-items:center;gap:12px}
+.up-logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#5ad1a8,#2c6f5a);display:grid;place-items:center;font-weight:700;color:#06140f;font-size:17px}
+.up-h1{font-size:16px;font-weight:600;color:#e6edf3}
+.up-sub{font-size:11px;color:#5b6573;letter-spacing:.5px;text-transform:uppercase}
+.up-conn{font-size:11px;padding:6px 12px;border-radius:20px;border:1px solid #2a323d;color:#8b97a6;display:flex;align-items:center;gap:6px;cursor:pointer;background:transparent;transition:.2s}
+.up-conn:hover{border-color:#2c6f5a;color:#e6edf3}
+.up-dot{width:7px;height:7px;border-radius:50%;background:#e5604d;box-shadow:0 0 7px #e5604d}
+.up-dot.ok{background:#5ad1a8;box-shadow:0 0 7px #5ad1a8}
+.up-wrap{max-width:1140px;margin:0 auto;padding:0 22px}
+.up-toolbar{padding:20px 0 8px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.up-lead h2{font-size:20px;font-weight:600;margin-bottom:4px;color:#e6edf3}
+.up-lead p{color:#8b97a6;font-size:13px}
+.up-actions{display:flex;gap:9px;flex-wrap:wrap}
+.up-btn{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:7px;cursor:pointer;border:none;font-family:inherit;transition:.18s}
+.up-btn-primary{background:#5ad1a8;color:#06140f;box-shadow:0 6px 18px -6px rgba(90,209,168,.55)}
+.up-btn-primary:hover{filter:brightness(1.08)}
+.up-btn-primary:disabled{background:#1c232d;color:#5b6573;box-shadow:none;cursor:not-allowed}
+.up-btn-ghost{background:#1c232d;color:#e6edf3;border:1px solid #2a323d}
+.up-btn-ghost:hover{border-color:#8b97a6}
+.up-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#222932;border:1px solid #2a323d;border-radius:11px;overflow:hidden;margin:7px 0 18px}
+.up-stat{background:#161b22;padding:13px 16px}
+.up-stat .n{font-size:22px;font-weight:700;line-height:1;font-family:'Space Mono',monospace}
+.up-stat .l{font-size:11px;color:#8b97a6;margin-top:4px}
+.n-green{color:#5ad1a8}.n-blue{color:#5aa2e8}.n-amber{color:#e8b34a}
+.up-panel{background:#161b22;border:1px solid #2a323d;border-radius:13px;overflow:hidden;margin-bottom:32px}
+.up-list-head{display:grid;grid-template-columns:32px 1fr 210px 115px;gap:12px;align-items:center;padding:10px 16px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#5b6573;border-bottom:1px solid #2a323d;font-family:'Space Mono',monospace}
+.up-row{display:grid;grid-template-columns:32px 1fr 210px 115px;gap:12px;align-items:center;padding:8px 16px;border-bottom:1px solid #222932;transition:background .15s}
+.up-row:last-child{border-bottom:none}
+.up-row:hover{background:rgba(255,255,255,.016)}
+.up-row.has-file{background:rgba(90,209,168,.04)}
+.up-row.error{background:rgba(229,96,77,.05)}
+.up-idx{font-size:11px;color:#5b6573;text-align:right;font-family:'Space Mono',monospace}
+.up-sname{font-size:14px;font-weight:500;display:flex;align-items:center;gap:8px;color:#e6edf3}
+.up-marker{width:6px;height:6px;border-radius:50%;background:#5b6573;flex-shrink:0}
+.up-row.has-file .up-marker{background:#5ad1a8;box-shadow:0 0 6px #5ad1a8}
+.up-row.error .up-marker{background:#e5604d}
+.up-drop{border:1.5px dashed #2a323d;border-radius:7px;padding:7px 11px;font-size:12px;color:#8b97a6;display:flex;align-items:center;gap:7px;cursor:pointer;transition:.15s;min-height:40px;background:#0e1116}
+.up-drop:hover{border-color:#2c6f5a;color:#e6edf3}
+.up-drop.over{border-color:#5ad1a8;background:rgba(90,209,168,.07);color:#e6edf3}
+.up-drop.filled{border-style:solid;border-color:#2c6f5a;background:rgba(90,209,168,.05)}
+.up-drop svg{flex-shrink:0;opacity:.65}
+.up-fname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Space Mono',monospace;font-size:11px}
+.up-rmv{margin-left:auto;color:#5b6573;font-size:15px;line-height:1;padding:2px 4px;border-radius:3px;cursor:pointer;background:none;border:none}
+.up-rmv:hover{color:#e5604d}
+.up-cell-status{font-size:11px;display:flex;align-items:center;gap:5px;color:#5b6573;font-family:'Space Mono',monospace}
+.up-badge{padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700}
+.up-badge-ready{background:rgba(90,209,168,.14);color:#5ad1a8}
+.up-badge-rows{background:rgba(90,162,232,.12);color:#5aa2e8}
+.up-badge-err{background:rgba(229,96,77,.14);color:#e5604d}
+.up-badge-done{background:rgba(90,209,168,.2);color:#5ad1a8}
+.up-badge-sending{background:rgba(232,179,74,.14);color:#e8b34a}
+.up-log{background:#0a0d11;border:1px solid #2a323d;border-radius:13px;margin-bottom:40px;overflow:hidden}
+.up-log-head{padding:11px 16px;border-bottom:1px solid #2a323d;display:flex;justify-content:space-between;align-items:center}
+.up-log-head h3{font-size:13px;font-weight:600;color:#e6edf3;display:flex;align-items:center;gap:7px}
+.up-log-head .clr{font-size:11px;color:#5b6573;cursor:pointer;background:none;border:none;font-family:inherit}
+.up-log-head .clr:hover{color:#e6edf3}
+.up-log-body{max-height:220px;overflow:auto;padding:11px 16px;font-family:'Space Mono',monospace;font-size:12px;line-height:1.8}
+.up-ln{display:flex;gap:9px}
+.up-t{color:#5b6573;flex-shrink:0}
+.c-ok{color:#5ad1a8}.c-er{color:#e5604d}.c-wn{color:#e8b34a}.c-in{color:#8b97a6}
+.up-log-empty{color:#5b6573}
+.up-modal-overlay{position:fixed;inset:0;background:rgba(5,7,10,.75);backdrop-filter:blur(4px);z-index:400;display:none;align-items:center;justify-content:center;padding:20px}
+.up-modal-overlay.show{display:flex}
+.up-modal{background:#161b22;border:1px solid #2a323d;border-radius:15px;max-width:540px;width:100%;overflow:hidden}
+.up-modal-head{padding:18px 22px;border-bottom:1px solid #2a323d}
+.up-modal-head h3{font-size:16px;font-weight:600;color:#e6edf3}
+.up-modal-head p{font-size:13px;color:#8b97a6;margin-top:2px}
+.up-modal-body{padding:18px 22px;display:flex;flex-direction:column;gap:14px}
+.up-field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#e6edf3}
+.up-field input{width:100%;padding:10px 12px;border-radius:8px;background:#0e1116;border:1px solid #2a323d;color:#e6edf3;font-family:'Space Mono',monospace;font-size:12px}
+.up-field input:focus{outline:none;border-color:#2c6f5a}
+.up-field .hint{font-size:12px;color:#5b6573;margin-top:5px;line-height:1.5}
+.up-modal-foot{padding:14px 22px;border-top:1px solid #2a323d;display:flex;justify-content:flex-end;gap:9px}
+.up-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;background:#161b22;border:1px solid #2a323d;padding:12px 18px;border-radius:10px;font-size:13px;z-index:500;transition:.3s;box-shadow:0 14px 36px -10px rgba(0,0,0,.6);display:flex;align-items:center;gap:9px;max-width:88vw}
+.up-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.up-toast .ti{width:7px;height:7px;border-radius:50%;background:#5ad1a8;flex-shrink:0}
+.up-toast.err .ti{background:#e5604d}
+
+/* GLOBAL LOADING */
+.loading-overlay{position:fixed;inset:0;background:rgba(15,23,42,.85);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.loading-overlay.hidden{display:none}
+.spinner-lg{width:42px;height:42px;border:4px solid rgba(59,130,246,.25);border-top-color:#3b82f6;border-radius:50%;animation:spin .7s linear infinite}
+.loading-text{font-size:14px;color:#93c5fd;font-weight:600}
+.loading-sub{font-size:12px;color:#64748b}
+@keyframes spin{to{transform:rotate(360deg)}}
+.dash-toast{position:fixed;top:62px;right:1rem;z-index:500;padding:10px 16px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;transform:translateY(-8px);transition:all .3s;pointer-events:none;max-width:300px}
+.dash-toast.show{opacity:1;transform:translateY(0)}
+.dash-toast.success{background:#166534;color:#bbf7d0;border:1px solid #22c55e}
+.dash-toast.error{background:#7f1d1d;color:#fca5a5;border:1px solid #ef4444}
+.dash-toast.loading{background:#1e3a5f;color:#bfdbfe;border:1px solid #3b82f6}
+.empty-row td{text-align:center;color:#475569;padding:1.8rem;font-size:13px}
+@media(max-width:700px){.info-grid,.bw-grid,.stat3,.det4{grid-template-columns:1fr 1fr}.spray-grid{grid-template-columns:1fr 1fr}.topbar-mid{display:none}.up-list-head{display:none}.up-row{grid-template-columns:1fr;gap:8px;padding:13px 15px}.up-idx{display:none}.up-stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner-lg"></div>
+  <div class="loading-text">กำลังดึงข้อมูลจาก Google Sheets...</div>
+  <div class="loading-sub">เชื่อมต่อ Apps Script API</div>
+</div>
+<div class="dash-toast" id="dashToast"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-box">C</div>
+    <div><span class="logo-main">CPAC Metro Air Quality</span><span class="logo-sub">Executive Dashboard</span></div>
+  </div>
+  <div class="topbar-mid" id="topFilter">
+    <button class="mpill pm10 active" onclick="setMetric('PM10')">PM10</button>
+    <button class="mpill pm25" onclick="setMetric('PM25')">PM2.5</button>
+    <button class="mpill aqi" onclick="setMetric('AQI')">AQI</button>
+  </div>
+  <div class="topbar-right">
+    <button class="tb-btn active-nav" id="navDash" onclick="showPage('dashboard')">📊 Dashboard</button>
+    <button class="tb-btn" id="navUpload" onclick="showPage('upload')">📤 Upload</button>
+    <button class="tb-btn cyan" onclick="window.open('https://www.modelaaiot.com/dashboard/l2pbD69zJfT2bCfOemgP','_blank')">🔴 Real Time</button>
+    <button class="tb-btn green" onclick="window.open('https://docs.google.com/spreadsheets/d/1TdXw4ckU99HoTQ2qAXoJLERadzM5zBAGhIyhVSnfKvE/edit?gid=1743105730#gid=1743105730','_blank')">🗄 Data Base</button>
+    <button class="tb-btn" id="btnRefresh" onclick="fetchData()"><span id="rfIcon">↻</span> ดึงข้อมูล</button>
+  </div>
+</div>
+
+<!-- DATE BAR -->
+<div class="date-bar" id="dateBar">
+  <span class="dbar-label">ช่วงเวลา:</span>
+  <button class="dbar-btn active" id="dbtnMonth" onclick="setDatePreset('month')">เดือนนี้</button>
+  <button class="dbar-btn" id="dbtnWeek" onclick="setDatePreset('week')">สัปดาห์ล่าสุด</button>
+  <span class="dbar-sep">|</span>
+  <span class="dbar-label">จาก</span>
+  <input type="date" class="date-inp" id="dateFrom" onchange="setDateCustom()">
+  <span class="dbar-label">ถึง</span>
+  <input type="date" class="date-inp" id="dateTo" onchange="setDateCustom()">
+  <span class="dbar-sep">|</span>
+  <span class="dbar-range" id="dateRangeLabel">—</span>
+</div>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="page active" id="pageDashboard">
+  <div class="inner">
+    <div class="hero">
+      <div class="hero-title">ระบบติดตามคุณภาพอากาศ CPAC</div>
+      <div class="hero-sub" id="heroSub">ระบบบริหารจัดการสำหรับผู้บริหาร • 39 สาขา • กำลังโหลด...</div>
+    </div>
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="ic-title">มาตรฐานคุณภาพอากาศ</div>
+        <div style="font-size:12px;font-weight:600;color:#60a5fa;margin-bottom:.35rem">CPAC (เข้มงวด)</div>
+        <div id="stdCPAC"></div>
+        <div style="font-size:12px;font-weight:600;color:#64748b;margin:.35rem 0 .28rem">กรมควบคุมมลพิษ (PCD)</div>
+        <div id="stdPCD"></div>
+      </div>
+      <div class="info-card">
+        <div class="ic-title">รายชื่อสาขาที่ Offline</div>
+        <div style="font-size:12px;font-weight:600;color:#f59e0b;margin-bottom:.35rem">รวม <span id="offNum">0</span> สาขา</div>
+        <div class="offline-list" id="offList"><div style="font-size:12px;color:#475569">ทุกสาขาออนไลน์</div></div>
+      </div>
+    </div>
+    <div class="bw-grid">
+      <div class="bw-card best"><div class="bw-icon">🏆</div><div><div class="bw-label">คุณภาพอากาศดีที่สุด</div><div class="bw-name" id="bestName">—</div><div class="bw-val" id="bestVal" style="color:#22c55e"></div></div></div>
+      <div class="bw-card worst"><div class="bw-icon">⚠️</div><div><div class="bw-label">ต้องได้รับการดูแลปรับปรุง</div><div class="bw-name" id="worstName">—</div><div class="bw-val" id="worstVal" style="color:#ef4444"></div></div></div>
+    </div>
+    <div class="stat3" id="stat3row"></div>
+    <div class="bar-section">
+      <div class="bar-sec-title">
+        <span>📊 เปรียบเทียบค่าเฉลี่ย <span id="barMetricLabel">PM10</span> รายสาขา (น้อย→มาก)</span>
+        <span style="font-size:11px;color:#475569">เฉพาะสาขา Online</span>
+      </div>
+      <div class="bar-chart-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="table-card">
+      <div class="table-hdr">
+        <div><div class="t-title">เปรียบเทียบสาขา</div><div class="t-sub" id="tableSubLabel">เรียงจากค่าสูงสุด</div></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>#</th><th>สาขา</th><th>เฉลี่ย</th><th>สูงสุด</th>
+            <th>เกิน CPAC (นาที)</th><th>เกิน PCD (นาที)</th>
+            <th>สถานะ</th><th>ข้อมูล</th>
+            <th>Online/Off</th><th>สาเหตุ Offline</th>
+          </tr></thead>
+          <tbody id="branchTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DETAIL ═══ -->
+<div class="page" id="pageDetail">
+  <div class="inner">
+    <div class="det-hero">
+      <div><div class="det-title" id="detTitle">—</div><div class="det-sub" id="detSub">—</div></div>
+      <div class="det-right">
+        <div id="detFilter" style="display:flex;gap:5px">
+          <button class="mpill pm10 active" onclick="setDetMetric('PM10')">PM10</button>
+          <button class="mpill pm25" onclick="setDetMetric('PM25')">PM2.5</button>
+          <button class="mpill aqi" onclick="setDetMetric('AQI')">AQI</button>
+        </div>
+        <button class="btn-back" onclick="showPage('dashboard')">← กลับ</button>
+      </div>
+    </div>
+    <div class="det4" id="detStat4"></div>
+    <div class="sec"><div class="sec-title">📈 กราฟเฉลี่ยรายชั่วโมง 7 วันย้อนหลัง</div><div class="chart-wrap"><canvas id="tsChart"></canvas></div></div>
+    <div class="sec">
+      <div class="sec-title">🌡 Heatmap วัน × ชั่วโมง</div>
+      <div class="hm-outer" id="hmArea"></div>
+      <div class="hm-legend">
+        <div class="hm-li"><div class="hm-ld" style="background:#166534"></div>ปกติ</div>
+        <div class="hm-li"><div class="hm-ld" style="background:#854d0e"></div>เกิน CPAC</div>
+        <div class="hm-li"><div class="hm-ld" style="background:#7f1d1d"></div>เกิน PCD</div>
+      </div>
+    </div>
+    <div class="sec"><div class="sec-title">💧 แผนปฏิบัติการฉีดน้ำ</div><div class="spray-grid" id="sprayGrid"></div><div class="peak-card" id="peakCard"></div></div>
+    <div class="sec"><div class="sec-title">⚠️ ไทม์ไลน์เหตุการณ์เกินมาตรฐาน</div><div class="tl" id="tlArea"></div></div>
+  </div>
+</div>
+
+<!-- ═══ UPLOAD PAGE (inline HTML, no iframe) ═══ -->
+<div class="page" id="pageUpload" style="background:#0e1116;min-height:calc(100vh - 54px)">
+  <div class="up-header">
+    <div class="up-brand">
+      <div class="up-logo">D</div>
+      <div><div class="up-h1">Dust Database 2026</div><div class="up-sub">CSV → Google Sheets Matcher</div></div>
+    </div>
+    <button class="up-conn" id="upConnBtn" onclick="upOpenConfig()">
+      <span class="up-dot" id="upConnDot"></span><span id="upConnText">ยังไม่ได้ตั้งค่าปลายทาง</span>
+    </button>
+  </div>
+  <div class="up-wrap">
+    <div class="up-toolbar">
+      <div class="up-lead">
+        <h2>จับคู่ไฟล์ CSV กับเซ็นเซอร์</h2>
+        <p>อัปโหลดไฟล์ CSV ให้ตรงกับแต่ละจุดเซ็นเซอร์ทางขวา จากนั้นกด "ส่งเข้า Google Sheets"</p>
+      </div>
+      <div class="up-actions">
+        <button class="up-btn up-btn-ghost" onclick="upOpenConfig()">⚙ ตั้งค่า</button>
+        <button class="up-btn up-btn-ghost" onclick="upClearAll()">ล้างทั้งหมด</button>
+        <button class="up-btn up-btn-primary" id="upSendBtn" onclick="upSendAll()" disabled>↑ ส่งเข้า Google Sheets</button>
+      </div>
+    </div>
+    <div class="up-stats">
+      <div class="up-stat"><div class="n" id="upStTotal">39</div><div class="l">จุดเซ็นเซอร์ทั้งหมด</div></div>
+      <div class="up-stat"><div class="n n-green" id="upStLoaded">0</div><div class="l">ไฟล์ที่จับคู่แล้ว</div></div>
+      <div class="up-stat"><div class="n n-blue" id="upStRows">0</div><div class="l">แถวข้อมูลรวม</div></div>
+      <div class="up-stat"><div class="n n-amber" id="upStSent">0</div><div class="l">ส่งสำเร็จแล้ว</div></div>
+    </div>
+    <div class="up-panel">
+      <div class="up-list-head"><span>#</span><span>จุดเซ็นเซอร์</span><span>ไฟล์ CSV</span><span>สถานะ</span></div>
+      <div id="upListBody"></div>
+    </div>
+    <div class="up-log">
+      <div class="up-log-head">
+        <h3>● บันทึกการทำงาน</h3>
+        <button class="clr" onclick="upClearLog()">ล้าง</button>
+      </div>
+      <div class="up-log-body" id="upLogBody"><span class="up-log-empty">— ยังไม่มีกิจกรรม —</span></div>
+    </div>
+  </div>
+  <!-- Config modal -->
+  <div class="up-modal-overlay" id="upOverlay">
+    <div class="up-modal">
+      <div class="up-modal-head"><h3>ตั้งค่าปลายทาง</h3><p>วาง URL ของ Google Apps Script Web App</p></div>
+      <div class="up-modal-body">
+        <div class="up-field"><label>Apps Script Web App URL</label><input type="text" id="upUrlInput" placeholder="https://script.google.com/macros/s/XXXX.../exec"><div class="hint" style="font-size:12px;color:#5b6573;margin-top:5px">Deploy เป็น Web App แล้วคัดลอก URL ที่ลงท้ายด้วย /exec</div></div>
+        <div class="up-field"><label>Secret token (ถ้ามี)</label><input type="text" id="upTokenInput" placeholder="เว้นว่างได้"></div>
+      </div>
+      <div class="up-modal-foot">
+        <button class="up-btn up-btn-ghost" onclick="upCloseConfig()">ยกเลิก</button>
+        <button class="up-btn up-btn-primary" onclick="upSaveConfig()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+  <div class="up-toast" id="upToast"><span class="ti"></span><span id="upToastMsg"></span></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// ════════════════════════════════════
+//  DASHBOARD LOGIC
+// ════════════════════════════════════
+const API_URL='https://script.google.com/macros/s/AKfycbz9LgArJJIHGZNc6YaLO4rMJJxjNqYY6E8oNOoqhxaZ_NKz98RzB6v0OAeZvb9LmykpNQ/exec';
+const BRANCHES=['กลุ่มบางซ่อน','กลุ่มพระราม4','บางโคล่','รัชวิภา','หลัก4','นวมินทร์','รามอินทรา','กลุ่มตลิ่งชัน','พระราม5','มีนบุรี','บางขุนเทียน','บางแค','กลุ่มพระราม 9','กลุ่มบางจาก','ท่าพระ','กัลปพฤกษ์','คลองหลวง','ดอนเมือง','กลุ่มบางนา กม.4','กลุ่มราษฎร์บูรณะ','บางพลี2','บางนา กม8 ราม2','ปากน้ำ','บางมด','คลองตัน 2','บางศรีเมือง','มหาสวัสดิ์','ปากเกร็ด','รัตนาธิเบศร์','ฉลองกรุง','คลอง9','คลอง7','ลาดปลาเค้า','แคราย 2','รังสิต','ปทุมธานี 2','เชียงรากใหญ่','เอกชัย','หนองจอก'];
+const STD={PM10:{cpac:80,pcd:120},PM25:{cpac:37.5,pcd:50},AQI:{cpac:120,pcd:200}};
+const MCOL={PM10:'pm10',PM25:'pm25',AQI:'aqi'};
+const MUNIT={PM10:'µg/m³',PM25:'µg/m³',AQI:''};
+const LS_ST='cpac_st_v3',LS_RS='cpac_rs_v3';
+
+let allData=[],branchData={},branchOnline={},branchReason={};
+let curMetric='PM10',curDetMetric='PM10',curBranch='';
+let tsChartInst=null,barChartInst=null;
+let dateFrom='',dateTo='',currentPage='dashboard';
+
+function loadPersist(){
+  try{const s=JSON.parse(localStorage.getItem(LS_ST)||'{}'),r=JSON.parse(localStorage.getItem(LS_RS)||'{}');
+    BRANCHES.forEach(b=>{branchOnline[b]=s.hasOwnProperty(b)?s[b]:true;branchReason[b]=r[b]||'';});}
+  catch(e){BRANCHES.forEach(b=>{branchOnline[b]=true;branchReason[b]='';});}
+}
+function savePersist(){
+  try{localStorage.setItem(LS_ST,JSON.stringify(branchOnline));localStorage.setItem(LS_RS,JSON.stringify(branchReason));}catch(e){}
+}
+
+function showPage(p){
+  currentPage=p;
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.getElementById('dateBar').style.display=(p==='dashboard'||p==='detail')?'flex':'none';
+  document.querySelectorAll('.tb-btn[id^="nav"]').forEach(b=>b.classList.remove('active-nav'));
+  if(p==='dashboard'){document.getElementById('pageDashboard').classList.add('active');document.getElementById('navDash').classList.add('active-nav');}
+  else if(p==='upload'){document.getElementById('pageUpload').classList.add('active');document.getElementById('navUpload').classList.add('active-nav');upInit();}
+  else if(p==='detail'){document.getElementById('pageDetail').classList.add('active');}
+}
+
+function showDashToast(msg,type,dur=3500){
+  const el=document.getElementById('dashToast');
+  el.textContent=msg;el.className='dash-toast '+type+' show';
+  if(dur>0)setTimeout(()=>el.classList.remove('show'),dur);
+}
+
+// DATE
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function fmtDate(s){if(!s)return'';return new Date(s).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'})}
+function setDatePreset(p){
+  const now=new Date();
+  document.getElementById('dbtnMonth').classList.toggle('active',p==='month');
+  document.getElementById('dbtnWeek').classList.toggle('active',p==='week');
+  if(p==='month'){dateFrom=new Date(now.getFullYear(),now.getMonth(),1).toISOString().slice(0,10);dateTo=todayStr();}
+  else{const d7=new Date(now);d7.setDate(d7.getDate()-6);dateFrom=d7.toISOString().slice(0,10);dateTo=todayStr();}
+  document.getElementById('dateFrom').value=dateFrom;document.getElementById('dateTo').value=dateTo;
+  updateRangeLabel();renderAll();
+}
+function setDateCustom(){
+  dateFrom=document.getElementById('dateFrom').value;dateTo=document.getElementById('dateTo').value;
+  document.getElementById('dbtnMonth').classList.remove('active');document.getElementById('dbtnWeek').classList.remove('active');
+  updateRangeLabel();renderAll();
+}
+function updateRangeLabel(){document.getElementById('dateRangeLabel').textContent=dateFrom&&dateTo?fmtDate(dateFrom)+' – '+fmtDate(dateTo):'—';}
+function filteredRecs(recs){if(!dateFrom&&!dateTo)return recs;return recs.filter(r=>{const d=r.ts.slice(0,10);return(!dateFrom||d>=dateFrom)&&(!dateTo||d<=dateTo);});}
+function renderAll(){renderMain();if(curBranch&&currentPage==='detail')renderDetail(curBranch);}
+
+async function fetchData(){
+  const btn=document.getElementById('btnRefresh'),ic=document.getElementById('rfIcon');
+  btn.disabled=true;ic.innerHTML='<span style="display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite"></span>';
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+  showDashToast('⏳ กำลังดึงข้อมูล...','loading',0);
+  let ok=false,errMsg='';
+  try{
+    const resp=await fetch(API_URL+'?t='+Date.now(),{redirect:'follow'});
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const json=await resp.json();
+    if(json.status==='error')throw new Error(json.message);
+    allData=json.data||[];ok=true;
+  }catch(e){errMsg=e.message;allData=genSample();}
+  branchData={};allData.forEach(r=>{if(!branchData[r.loc])branchData[r.loc]=[];branchData[r.loc].push(r);});
+  document.getElementById('heroSub').textContent=`ระบบบริหารจัดการสำหรับผู้บริหาร • 39 สาขา • ข้อมูลรวม ${allData.length.toLocaleString()} บันทึก`;
+  renderAll();
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  btn.disabled=false;ic.textContent='↻';
+  if(ok)showDashToast('✅ โหลดข้อมูลสำเร็จ — '+allData.length.toLocaleString()+' บันทึก','success');
+  else showDashToast('⚠️ ดึงข้อมูลไม่ได้ — ใช้ข้อมูลสำรอง','error',5000);
+}
+
+function genSample(){
+  const d=[],now=new Date();
+  BRANCHES.forEach((loc,bi)=>{
+    for(let i=0;i<2880;i++){
+      const t=new Date(now-i*60000),h=t.getHours();
+      const base=15+Math.sin(h/12*Math.PI)*25+Math.random()*20+(bi%7)*6;
+      d.push({loc,pm25:+(base*.55).toFixed(2),pm10:+(base).toFixed(2),aqi:+(base*1.4).toFixed(2),ts:t.toISOString().replace('T',' ').slice(0,19)});
+    }
+  });return d;
+}
+
+function avg(a){return a.length?a.reduce((s,v)=>s+v,0)/a.length:0}
+function mx(a){return a.length?Math.max(...a):0}
+
+function setMetric(m){
+  curMetric=m;
+  document.querySelectorAll('#topFilter .mpill').forEach(b=>{b.classList.remove('active');if((m==='PM10'&&b.classList.contains('pm10'))||(m==='PM25'&&b.classList.contains('pm25'))||(m==='AQI'&&b.classList.contains('aqi')))b.classList.add('active');});
+  renderMain();
+}
+function setDetMetric(m){
+  curDetMetric=m;
+  document.querySelectorAll('#detFilter .mpill').forEach(b=>{b.classList.remove('active');if((m==='PM10'&&b.classList.contains('pm10'))||(m==='PM25'&&b.classList.contains('pm25'))||(m==='AQI'&&b.classList.contains('aqi')))b.classList.add('active');});
+  renderDetail(curBranch);
+}
+function checkDQ(recs){
+  if(!recs.length)return{ok:false,issues:['ไม่พบข้อมูลในช่วงเวลานี้'],valid:0,total:0};
+  let bT=0,bV=0;recs.forEach(r=>{if(!r.ts||r.ts.length<10)bT++;if(isNaN(r.pm10)||isNaN(r.pm25)||isNaN(r.aqi))bV++;});
+  const iss=[];if(bT>0)iss.push(`ค่าวันที่อ่านไม่ได้ ${bT} รายการ`);if(bV>0)iss.push(`ค่าตัวเลขผิดปกติ ${bV} รายการ`);
+  const valid=recs.length-bT-bV;if(valid<recs.length*.5)iss.push('ข้อมูลที่ใช้ได้<50%');
+  return{ok:iss.length===0,issues:iss,valid,total:recs.length};
+}
+
+function renderMain(){
+  const m=curMetric,s=STD[m],u=MUNIT[m],col=MCOL[m];
+  document.getElementById('stdCPAC').innerHTML=`<div class="std-row"><span>${m}</span><span style="font-weight:700;color:#60a5fa">${s.cpac} ${u}</span></div>`;
+  document.getElementById('stdPCD').innerHTML=`<div class="std-row"><span>${m}</span><span style="font-weight:700;color:#64748b">≤ ${s.pcd} ${u}</span></div>`;
+  const off=BRANCHES.filter(b=>!branchOnline[b]);
+  document.getElementById('offNum').textContent=off.length;
+  document.getElementById('offList').innerHTML=off.length?off.map(b=>`<div class="off-item"><div class="off-name">${b}</div>${branchReason[b]?`<div class="off-reason">📝 ${branchReason[b]}</div>`:''}</div>`).join(''):`<div style="font-size:12px;color:#475569">ทุกสาขาออนไลน์</div>`;
+  const onB=BRANCHES.filter(b=>branchOnline[b]);
+  let allAvgs=[],overC=0,pass=0,bestA=Infinity,worstA=-1,bestB=null,worstB=null;
+  const rows=[];
+  BRANCHES.forEach(b=>{
+    const recs=filteredRecs(branchData[b]||[]);
+    const dq=checkDQ(recs);
+    if(!recs.length||!dq.valid){rows.push({name:b,avg:null,max:null,oc:0,op:0,dq});return;}
+    const vals=recs.map(r=>r[col]).filter(v=>!isNaN(v));
+    const a=avg(vals),mx2=mx(vals),oc=vals.filter(v=>v>s.cpac).length,op=vals.filter(v=>v>s.pcd).length;
+    rows.push({name:b,avg:a,max:mx2,oc,op,dq});
+    if(branchOnline[b]){allAvgs.push(a);if(a>s.cpac)overC++;else pass++;if(a<bestA){bestA=a;bestB=b;}if(a>worstA){worstA=a;worstB=b;}}
+  });
+  rows.sort((a,b)=>(b.max||0)-(a.max||0));
+  document.getElementById('bestName').textContent=bestB||'—';
+  document.getElementById('bestVal').textContent=bestB?`เฉลี่ย ${bestA.toFixed(2)} ${u}`:'';
+  document.getElementById('worstName').textContent=worstB||'—';
+  document.getElementById('worstVal').textContent=worstB?`เฉลี่ย ${worstA.toFixed(2)} ${u}`:'';
+  const avgAll=avg(allAvgs);
+  document.getElementById('stat3row').innerHTML=`
+    <div class="s4c"><div><div class="s4label">ผ่านมาตรฐาน CPAC</div><div class="s4val green">${pass}</div><div class="s4sub">จาก ${onB.length} สาขา</div></div><div style="font-size:24px;opacity:.2">✅</div></div>
+    <div class="s4c"><div><div class="s4label">เกินมาตรฐาน CPAC</div><div class="s4val red">${overC}</div><div class="s4sub">เกินเกณฑ์ ${s.cpac}${u}</div></div><div style="font-size:24px;opacity:.2">⚠️</div></div>
+    <div class="s4c"><div><div class="s4label">ค่าเฉลี่ยทั้งหมด</div><div class="s4val blue">${avgAll.toFixed(2)}</div><div class="s4sub">${u||'คะแนน'}</div></div><div style="font-size:24px;opacity:.2">📊</div></div>
+  `;
+  // BAR CHART
+  document.getElementById('barMetricLabel').textContent=m;
+  const bd=rows.filter(r=>r.avg!=null&&branchOnline[r.name]).sort((a,b)=>a.avg-b.avg);
+  const bc=bd.map(r=>r.avg>s.pcd?'rgba(239,68,68,.82)':r.avg>s.cpac?'rgba(234,179,8,.82)':'rgba(34,197,94,.72)');
+  if(barChartInst){barChartInst.destroy();barChartInst=null;}
+  const bctx=document.getElementById('barChart');
+  if(bctx)barChartInst=new Chart(bctx,{type:'bar',data:{labels:bd.map(r=>r.name),datasets:[{label:m,data:bd.map(r=>+r.avg.toFixed(2)),backgroundColor:bc,borderRadius:4,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.x.toFixed(2)} ${u}`}}},scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'rgba(255,255,255,.03)'}}}}});
+
+  document.getElementById('tableSubLabel').textContent=`เรียงจากค่าสูงสุด • ${dateFrom?fmtDate(dateFrom)+' – '+fmtDate(dateTo):'ข้อมูลทั้งหมด'}`;
+  document.getElementById('branchTbody').innerHTML=rows.map((r,i)=>{
+    const isOver=r.avg!=null&&r.avg>s.cpac,on=branchOnline[r.name];
+    const ac=r.avg==null?'':r.avg>s.pcd?'color:#ef4444':r.avg>s.cpac?'color:#eab308':'';
+    const mc=r.max==null?'':r.max>s.pcd?'color:#ef4444;font-weight:700':r.max>s.cpac?'color:#eab308;font-weight:700':'font-weight:700';
+    const dq=r.dq;
+    const dqH=dq?dq.ok?`<span class="dq-badge dq-ok has-tip"><span class="dq-dot"></span>สมบูรณ์<span class="tip">ข้อมูล ${dq.valid}/${dq.total} — ไม่พบความผิดปกติ</span></span>`:`<span class="dq-badge dq-warn has-tip"><span class="dq-dot"></span>ไม่สมบูรณ์<span class="tip">${dq.issues.join(' | ')}<br>ใช้ได้: ${dq.valid}/${dq.total}</span></span>`:`<span class="dq-badge dq-warn has-tip"><span class="dq-dot"></span>ไม่มีข้อมูล<span class="tip">ไม่พบข้อมูลในช่วงที่เลือก</span></span>`;
+    return`<tr onclick="openBranch('${r.name.replace(/'/g,"\\'")}')">
+      <td><span class="rank-num">${i+1}</span></td><td style="font-weight:600">${r.name}</td>
+      <td style="${ac}">${r.avg!=null?r.avg.toFixed(2):'—'}</td><td style="${mc}">${r.max!=null?r.max.toFixed(2):'—'}</td>
+      <td>${r.oc?r.oc.toLocaleString():'0'}</td><td>${r.op?r.op.toLocaleString():'0'}</td>
+      <td><span class="badge ${isOver?'badge-over':'badge-ok'}">${isOver?'เกินมาตรฐาน':'ปกติ'}</span></td>
+      <td>${dqH}</td>
+      <td onclick="event.stopPropagation()"><button class="tsw ${on?'on':''}" onclick="toggleB('${r.name.replace(/'/g,"\\'")}',this)"></button></td>
+      <td onclick="event.stopPropagation()"><input class="reason-inp" type="text" placeholder="${on?'—':'ระบุสาเหตุ...'}" value="${branchReason[r.name]||''}" ${on?'disabled':''} maxlength="60" oninput="saveReason('${r.name.replace(/'/g,"\\'")}',this.value)"></td>
+    </tr>`;
+  }).join('')||`<tr class="empty-row"><td colspan="10">ไม่มีข้อมูลในช่วงวันที่เลือก</td></tr>`;
+}
+
+function toggleB(name,el){branchOnline[name]=!branchOnline[name];el.classList.toggle('on',branchOnline[name]);savePersist();renderMain();}
+function saveReason(name,val){
+  branchReason[name]=val.trim();savePersist();
+  const off=BRANCHES.filter(b=>!branchOnline[b]);
+  document.getElementById('offNum').textContent=off.length;
+  document.getElementById('offList').innerHTML=off.length?off.map(b=>`<div class="off-item"><div class="off-name">${b}</div>${branchReason[b]?`<div class="off-reason">📝 ${branchReason[b]}</div>`:''}</div>`).join(''):`<div style="font-size:12px;color:#475569">ทุกสาขาออนไลน์</div>`;
+}
+
+function openBranch(name){
+  curBranch=name;curDetMetric=curMetric;
+  showPage('detail');
+  document.querySelectorAll('#detFilter .mpill').forEach(b=>{b.classList.remove('active');if((curDetMetric==='PM10'&&b.classList.contains('pm10'))||(curDetMetric==='PM25'&&b.classList.contains('pm25'))||(curDetMetric==='AQI'&&b.classList.contains('aqi')))b.classList.add('active');});
+  renderDetail(name);
+}
+function renderDetail(name){
+  const m=curDetMetric,s=STD[m],u=MUNIT[m],col=MCOL[m];
+  const recs=filteredRecs(branchData[name]||[]);
+  document.getElementById('detTitle').textContent='📍 '+name;
+  document.getElementById('detSub').textContent=`รายละเอียดสาขา • ${recs.length.toLocaleString()} บันทึก • ${dateFrom?fmtDate(dateFrom)+' – '+fmtDate(dateTo):''}`;
+  const vals=recs.map(r=>r[col]).filter(v=>!isNaN(v));
+  const a=avg(vals),mxv=mx(vals),oc=vals.filter(v=>v>s.cpac).length,op=vals.filter(v=>v>s.pcd).length;
+  const maxRec=vals.length?recs.reduce((a2,b2)=>b2[col]>a2[col]?b2:a2,recs[0]):null;
+  const ac=a>s.pcd?'red':a>s.cpac?'yellow':'green',mc=mxv>s.pcd?'red':mxv>s.cpac?'yellow':'green';
+  document.getElementById('detStat4').innerHTML=`
+    <div class="dsc"><div class="dsc-label">ค่าเฉลี่ย</div><div class="dsc-val ${ac}">${a.toFixed(2)}</div><div class="dsc-sub">${(a/s.cpac*100).toFixed(1)}% ของเกณฑ์ CPAC</div></div>
+    <div class="dsc"><div class="dsc-label">ค่าสูงสุด</div><div class="dsc-val ${mc}">${mxv.toFixed(2)}</div><div class="dsc-sub">${maxRec?maxRec.ts.slice(0,16):''}</div></div>
+    <div class="dsc"><div class="dsc-label">เกิน CPAC (นาที)</div><div class="dsc-val ${oc>0?'red':'green'}">${oc.toLocaleString()}</div><div class="dsc-sub">${Math.floor(oc/60)} ชั่วโมง</div></div>
+    <div class="dsc"><div class="dsc-label">เกิน PCD (นาที)</div><div class="dsc-val ${op>0?'red':'green'}">${op.toLocaleString()}</div><div class="dsc-sub">${Math.floor(op/60)} ชั่วโมง</div></div>
+  `;
+  renderTSChart(recs,m,col,s);renderHeatmap(recs,col,s);renderSpray(branchData[name]||[]);renderTL(recs,col,s,u);
+}
+function renderTSChart(recs,m,col,s){
+  if(tsChartInst){tsChartInst.destroy();tsChartInst=null;}
+  const now=new Date(),cut=new Date(now-7*24*3600000),r7=recs.filter(r=>new Date(r.ts)>=cut);
+  const h={};r7.forEach(r=>{const hh=new Date(r.ts).getHours();if(!h[hh])h[hh]=[];h[hh].push(r[col]);});
+  const labels=[],data=[];for(let i=0;i<24;i++){labels.push(i+':00');data.push(h[i]?+avg(h[i]).toFixed(2):null);}
+  const lc=m==='PM10'?'#f97316':m==='PM25'?'#0ea5e9':'#a855f7';
+  const ctx=document.getElementById('tsChart').getContext('2d');
+  tsChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:m,data,borderColor:lc,backgroundColor:lc+'20',borderWidth:2.5,pointRadius:3,tension:.35,fill:true,spanGaps:true},{label:`CPAC(${s.cpac})`,data:new Array(24).fill(s.cpac),borderColor:'#eab308',borderWidth:1.5,borderDash:[6,3],pointRadius:0,fill:false},{label:`PCD(${s.pcd})`,data:new Array(24).fill(s.pcd),borderColor:'#ef4444',borderWidth:1.5,borderDash:[4,2],pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'top',labels:{color:'#94a3b8',font:{size:11},boxWidth:10,padding:10}}},scales:{x:{ticks:{color:'#64748b',font:{size:10},autoSkip:true,maxRotation:0},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}}},interaction:{mode:'index',intersect:false}}});
+}
+function renderHeatmap(recs,col,s){
+  const fr=filteredRecs(recs),ds=new Set();fr.forEach(r=>ds.add(r.ts.slice(0,10)));
+  const dates=[...ds].sort(),dh={};fr.forEach(r=>{const k=r.ts.slice(0,10)+'|'+new Date(r.ts).getHours();if(!dh[k])dh[k]=[];dh[k].push(r[col]);});
+  const heads='<th class="hm-rl">วันที่</th>'+Array.from({length:24},(_,h)=>`<th>${h}</th>`).join('');
+  const rows=dates.map(d=>{const cells=Array.from({length:24},(_,h)=>{const k=d+'|'+h;if(!dh[k])return`<td><div class="hm-cell cn">-</div></td>`;const v=mx(dh[k]);const cls=v>s.pcd?'cb':v>s.cpac?'cw':'cg';return`<td><div class="hm-cell ${cls}" title="${d} ${h}:00 — ${v.toFixed(1)}">${v>=100?Math.round(v):v.toFixed(1)}</div></td>`;}).join('');return`<tr><td class="hm-rl">${d}</td>${cells}</tr>`;}).join('');
+  document.getElementById('hmArea').innerHTML=dates.length?`<table class="hm-table"><thead><tr>${heads}</tr></thead><tbody>${rows}</tbody></table>`:`<div style="padding:.75rem;color:#475569;font-size:13px">ไม่มีข้อมูลในช่วงที่เลือก</div>`;
+}
+function renderSpray(recs){
+  const now=new Date(),cut30=new Date(now-30*24*3600000),r30=recs.filter(r=>new Date(r.ts)>=cut30);
+  const h2={};r30.forEach(r=>{const h=new Date(r.ts).getHours();if(!h2[h])h2[h]=[];h2[h].push(r.pm10);});
+  const highH=[];for(let h=0;h<24;h++){if(h2[h]&&avg(h2[h])>40)highH.push(h);}
+  const slots=[{name:'เช้า',s:4,e:8,lbl:'04:00–08:59'},{name:'กลางวัน',s:9,e:12,lbl:'09:00–12:59'},{name:'เย็น',s:13,e:17,lbl:'13:00–17:59'},{name:'กลางคืน',s:18,e:3,lbl:'18:00–03:59'}];
+  const acts=slots.map(sl=>sl.name==='กลางคืน'?highH.some(h=>h>=18||h<=3):highH.some(h=>h>=sl.s&&h<=sl.e));
+  document.getElementById('sprayGrid').innerHTML=slots.map((sl,i)=>`<div class="spray-slot ${acts[i]?'act':''}"><div class="ss-name">${sl.name}</div><div class="ss-time">${sl.lbl}</div><div class="ss-chk">${acts[i]?'✓':'○'}</div></div>`).join('');
+  const peak=highH.slice(0,6);
+  document.getElementById('peakCard').innerHTML=`<div class="peak-lbl">ช่วงเวลาที่มีค่าฝุ่นสูง</div><div class="peak-hrs">${peak.length?peak.map(h=>String(h).padStart(2,'0')+':00').join(', '):'ไม่มีชั่วโมงที่เกินเกณฑ์'}</div><div class="peak-sub">วิเคราะห์ย้อนหลัง 30 วัน (PM10 > 40 µg/m³)</div>`;
+}
+function renderTL(recs,col,s,u){
+  const bd={};recs.forEach(r=>{if(r[col]<=s.cpac)return;const d=r.ts.slice(0,10);if(!bd[d])bd[d]={maxVal:0,count:0,level:1};if(r[col]>bd[d].maxVal)bd[d].maxVal=r[col];bd[d].count++;if(r[col]>s.pcd)bd[d].level=2;});
+  const sorted=Object.keys(bd).sort().reverse();
+  document.getElementById('tlArea').innerHTML=sorted.length?sorted.map(d=>{const it=bd[d];return`<div class="tl-row"><div class="tl-date">${d}</div><span class="tl-badge ${it.level===2?'l2':'l1'}">${it.level===2?'L2 PCD':'L1 CPAC'}</span><div class="tl-val">${it.maxVal.toFixed(2)} ${u}</div><div class="tl-dur">รวม ${it.count} นาที</div></div>`;}).join(''):`<div style="padding:.75rem;color:#475569;font-size:13px">ไม่มีเหตุการณ์เกินมาตรฐาน</div>`;
+}
+
+// ════════════════════════════════════
+//  UPLOAD LOGIC (inline, no iframe)
+// ════════════════════════════════════
+const UP_SENSORS=['ปากเกร็ด','คลอง7','ฉลองกรุง','บางพลี2','รามอินทรา','รังสิต','รัชวิภา','กลุ่มพระราม 9','บางมด','รัตนาธิเบศร์','มีนบุรี','บางโคล่','กลุ่มบางซ่อน','กลุ่มตลิ่งชัน','มหาสวัสดิ์','นวมินทร์','กลุ่มบางนา กม.4','กลุ่มพระราม4','บางแค','หลัก4','พระราม5','บางขุนเทียน','กลุ่มบางจาก','ท่าพระ','กัลปพฤกษ์','คลองหลวง','ดอนเมือง','กลุ่มราษฎร์บูรณะ','บางนา กม8 ราม2','ปากน้ำ','คลองตัน 2','บางศรีเมือง','คลอง9','ลาดปลาเค้า','แคราย 2','ปทุมธานี 2','เชียงรากใหญ่','เอกชัย','หนองจอก'];
+const UP_DEFAULT_URL='https://script.google.com/macros/s/AKfycbxbbNubfYA4GJiuIm62Azv74QjD2pzAMtJpPFBPhPBC6EVp67y0p2sxZht3zcv8uhItmw/exec';
+const UP_CFG_KEY='dustCfg2026';
+let upCFG={url:UP_DEFAULT_URL,token:''};
+let upState={};
+let upInited=false;
+let upToastTimer;
+
+function upInit(){
+  if(upInited)return;upInited=true;
+  upLoadCfg();upRender();upLog('พร้อมใช้งาน — กรุณาตั้งค่า URL ปลายทางก่อนเริ่มส่ง','c-in');
+}
+function upNow(){return new Date().toTimeString().slice(0,8)}
+function upEsc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function upLog(msg,cls='c-in'){
+  const body=document.getElementById('upLogBody');
+  if(body.querySelector('.up-log-empty'))body.innerHTML='';
+  const ln=document.createElement('div');ln.className='up-ln';
+  ln.innerHTML=`<span class="up-t">${upNow()}</span><span class="${cls}">${upEsc(msg)}</span>`;
+  body.appendChild(ln);body.scrollTop=body.scrollHeight;
+}
+function upClearLog(){document.getElementById('upLogBody').innerHTML='<span class="up-log-empty">— ยังไม่มีกิจกรรม —</span>';}
+function upToast(msg,err=false){
+  const t=document.getElementById('upToast');document.getElementById('upToastMsg').textContent=msg;
+  t.classList.toggle('err',err);t.classList.add('show');
+  clearTimeout(upToastTimer);upToastTimer=setTimeout(()=>t.classList.remove('show'),3200);
+}
+function upUpdateStats(){
+  let loaded=0,rows=0,sent=0;
+  Object.values(upState).forEach(s=>{if(!s.error){loaded++;rows+=s.rows.length;if(s.status==='done')sent+=s.rows.length;}});
+  document.getElementById('upStLoaded').textContent=loaded;
+  document.getElementById('upStRows').textContent=rows;
+  document.getElementById('upStSent').textContent=sent;
+  const ready=Object.values(upState).some(s=>!s.error&&s.status!=='done');
+  document.getElementById('upSendBtn').disabled=!(ready&&upCFG.url);
+}
+function upRender(){
+  const body=document.getElementById('upListBody');body.innerHTML='';
+  UP_SENSORS.forEach((name,idx)=>{
+    const st=upState[name];
+    const row=document.createElement('div');
+    row.className='up-row'+(st?(st.error?' error':' has-file'):'');
+    let statusHtml='<span class="up-cell-status">— ว่าง —</span>';
+    if(st){
+      if(st.status==='done')statusHtml=`<span class="up-cell-status"><span class="up-badge up-badge-done">ส่งแล้ว</span></span>`;
+      else if(st.status==='sending')statusHtml=`<span class="up-cell-status"><span class="up-badge up-badge-sending">กำลังส่ง</span></span>`;
+      else if(st.error)statusHtml=`<span class="up-cell-status"><span class="up-badge up-badge-err">ผิดพลาด</span></span>`;
+      else statusHtml=`<span class="up-cell-status"><span class="up-badge up-badge-rows">${st.rows.length} แถว</span></span>`;
+    }
+    let dropHtml;
+    if(st&&!st.error){
+      dropHtml=`<div class="up-drop filled" data-name="${upEsc(name)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><span class="up-fname">${upEsc(st.fileName)}</span><button class="up-rmv" data-rm="${upEsc(name)}">×</button></div>`;
+    }else{
+      dropHtml=`<div class="up-drop${st&&st.error?' filled':''}" data-name="${upEsc(name)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span class="up-fname">${st&&st.error?'ไฟล์ผิดพลาด — ลองใหม่':'ลากไฟล์มาวาง / คลิกเลือก'}</span></div>`;
+    }
+    row.innerHTML=`<div class="up-idx">${idx+1}</div><div class="up-sname"><span class="up-marker"></span>${upEsc(name)}</div><div>${dropHtml}</div><div>${statusHtml}</div>`;
+    body.appendChild(row);
+  });
+  upBindDrops();upUpdateStats();
+}
+function upBindDrops(){
+  document.querySelectorAll('#upListBody .up-drop').forEach(d=>{
+    const name=d.dataset.name;
+    const rm=d.querySelector('.up-rmv');
+    if(rm)rm.addEventListener('click',e=>{e.stopPropagation();delete upState[name];upLog(`ลบไฟล์ของ "${name}"`,'c-wn');upRender();});
+    d.addEventListener('click',()=>upPickFile(name));
+    d.addEventListener('dragover',e=>{e.preventDefault();d.classList.add('over');});
+    d.addEventListener('dragleave',()=>d.classList.remove('over'));
+    d.addEventListener('drop',e=>{e.preventDefault();d.classList.remove('over');const f=e.dataTransfer.files[0];if(f)upHandleFile(name,f);});
+  });
+}
+function upPickFile(name){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.csv,text/csv';
+  inp.onchange=()=>{if(inp.files[0])upHandleFile(name,inp.files[0]);};inp.click();
+}
+function upParseCSV(text){
+  text=text.replace(/^\uFEFF/,'');const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++;}else q=false;}else cur+=c;}else{if(c==='"')q=true;else if(c===','){row.push(cur);cur='';}else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}else if(c==='\r'){}else cur+=c;}}
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}
+  return rows.filter(r=>r.length>1||(r.length===1&&r[0].trim()!==''));
+}
+function upHandleFile(name,file){
+  if(!/\.csv$/i.test(file.name)){upToast('รองรับเฉพาะไฟล์ .csv เท่านั้น',true);return;}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const all=upParseCSV(reader.result);if(all.length<2)throw new Error('ไฟล์ไม่มีข้อมูล');
+      const header=all[0];const uIdx=header.findIndex(h=>String(h||'').trim().toLowerCase()==='updated_at');
+      if(uIdx===-1)throw new Error('ไม่พบคอลัมน์ "updated_at"');
+      const mapped=[];let skip=0;
+      all.slice(1).forEach(r=>{const b=(r[1]??'').trim(),e=(r[4]??'').trim(),h=(r[7]??'').trim(),ts=(r[uIdx]??'').trim();if(b===''&&e===''&&h===''&&ts===''){skip++;return;}mapped.push([b,e,h,ts]);});
+      if(!mapped.length)throw new Error('ไม่พบข้อมูลที่ใช้ได้');
+      upState[name]={fileName:file.name,rows:mapped,error:false,status:'ready'};
+      upLog(`โหลด "${file.name}" → "${name}" : ${mapped.length} แถว${skip?` · ข้าม ${skip} แถวว่าง`:''}`, 'c-ok');upRender();
+    }catch(err){upState[name]={fileName:file.name,rows:[],error:true,status:'error'};upLog(`อ่านไฟล์ไม่สำเร็จ: ${err.message}`,'c-er');upToast('อ่านไฟล์ไม่สำเร็จ: '+err.message,true);upRender();}
+  };reader.onerror=()=>upToast('อ่านไฟล์ไม่ได้',true);
+  reader.readAsText(file,'utf-8');
+}
+function upLoadCfg(){
+  try{const r=JSON.parse(localStorage.getItem(UP_CFG_KEY));if(r&&typeof r==='object'){upCFG.url=r.url??UP_DEFAULT_URL;upCFG.token=r.token??'';}}catch(e){}upReflectCfg();
+}
+function upReflectCfg(){
+  const ok=!!upCFG.url;
+  const dot=document.getElementById('upConnDot');const txt=document.getElementById('upConnText');
+  if(dot&&txt){dot.classList.toggle('ok',ok);txt.textContent=ok?'เชื่อมต่อปลายทางแล้ว':'ยังไม่ได้ตั้งค่าปลายทาง';}upUpdateStats();
+}
+function upOpenConfig(){document.getElementById('upUrlInput').value=upCFG.url;document.getElementById('upTokenInput').value=upCFG.token;document.getElementById('upOverlay').classList.add('show');}
+function upCloseConfig(){document.getElementById('upOverlay').classList.remove('show');}
+function upSaveConfig(){upCFG.url=document.getElementById('upUrlInput').value.trim();upCFG.token=document.getElementById('upTokenInput').value.trim();try{localStorage.setItem(UP_CFG_KEY,JSON.stringify(upCFG));}catch(e){}upReflectCfg();upCloseConfig();upToast(upCFG.url?'บันทึกการตั้งค่าแล้ว':'ล้างการตั้งค่าแล้ว');}
+async function upSendAll(){
+  if(!upCFG.url){upToast('กรุณาตั้งค่า URL ก่อน',true);upOpenConfig();return;}
+  const targets=Object.entries(upState).filter(([n,s])=>!s.error&&s.status!=='done');
+  if(!targets.length){upToast('ไม่มีไฟล์ที่ต้องส่ง',true);return;}
+  const batch=[];targets.forEach(([name,s])=>s.rows.forEach(r=>batch.push([name,r[0],r[1],r[2],r[3]])));
+  document.getElementById('upSendBtn').disabled=true;targets.forEach(([n])=>upState[n].status='sending');upRender();
+  upLog(`เริ่มส่ง ${batch.length} แถว จาก ${targets.length} เซ็นเซอร์ …`,'c-in');
+  const payload=JSON.stringify({token:upCFG.token,sheet:'Dust database 2026',rows:batch});
+  try{
+    const res=await fetch(upCFG.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
+    const txt=await res.text();let data;try{data=JSON.parse(txt);}catch(e){throw new Error('ปลายทางตอบกลับไม่ใช่ JSON');}
+    if(!data.ok)throw new Error(data.error||'ปลายทางแจ้งข้อผิดพลาด');
+    targets.forEach(([n])=>upState[n].status='done');upLog(`✓ สำเร็จ: เพิ่ม ${data.added??batch.length} แถว`,'c-ok');upToast(`ส่งสำเร็จ — เพิ่ม ${data.added??batch.length} แถว`);upRender();return;
+  }catch(err){
+    const isFail=err instanceof TypeError||/failed to fetch|load failed|networkerror/i.test(err.message||'');
+    if(!isFail){targets.forEach(([n])=>upState[n].status='ready');upLog(`✗ ${err.message}`,'c-er');upToast('ส่งไม่สำเร็จ: '+err.message,true);upRender();return;}
+    upLog('เบราว์เซอร์บล็อก — ลองวิธีสำรอง …','c-wn');
+  }
+  try{
+    await fetch(upCFG.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
+    targets.forEach(([n])=>upState[n].status='done');upLog(`✓ ส่งแล้ว ${batch.length} แถว (โหมดสำรอง) — โปรดเช็คใน Sheet`,'c-ok');upToast(`ส่งแล้ว ${batch.length} แถว`);
+  }catch(err2){targets.forEach(([n])=>upState[n].status='ready');upLog(`✗ ${err2.message}`,'c-er');upToast('ส่งไม่สำเร็จ: '+err2.message,true);}
+  upRender();
+}
+function upClearAll(){if(!Object.keys(upState).length){upToast('ไม่มีอะไรให้ล้าง');return;}for(const k in upState)delete upState[k];upLog('ล้างไฟล์ทั้งหมด','c-wn');upRender();}
+
+// ── INIT ──
+loadPersist();
+setDatePreset('month');
+fetchData();
+</script>
